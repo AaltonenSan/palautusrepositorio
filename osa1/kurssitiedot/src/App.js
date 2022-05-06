@@ -35,7 +35,7 @@ const Header = (prop) => {
 const Part = (part) => {
   return (
     <div>
-      <p>{part.name} {part.exes}</p>
+      <p>{part.p.name} {part.p.exercises}</p>
     </div>
   )
 }
@@ -43,9 +43,9 @@ const Content = (course) => {
   console.log(course.parts)
   return (
     <div>
-      <Part name={course.parts[0].name} exes={course.parts[0].exercises} />
-      <Part name={course.parts[1].name} exes={course.parts[1].exercises} />
-      <Part name={course.parts[2].name} exes={course.parts[2].exercises} />
+      <Part p={course.parts[0]} />
+      <Part p={course.parts[1]} />
+      <Part p={course.parts[2]} />
     </div>
   )
 }
