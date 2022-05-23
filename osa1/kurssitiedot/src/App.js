@@ -55,9 +55,7 @@ const Total = (course) => {
     sum += course.parts[i].exercises
   }
   return (
-    <div>
       <p>Number of exercises {sum}</p>
-    </div>
   )
 }
 
