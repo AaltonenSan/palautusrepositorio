@@ -90,9 +90,9 @@ function Weather({ city }) {
   return (
     <div>
       <h2>Weather in {city}</h2>
-      <p>temperature {weather.temperature} Celsius</p>
+      <p>Temperature {weather.temperature} Celsius</p>
       <img src={weather.icons.icon} alt={weather.icons.description} />
-      <p>wind {weather.wind_speed} m/s</p>
+      <p>Wind {weather.wind_speed} m/s</p>
     </div>
   )
 }
