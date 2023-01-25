@@ -1,1 +1,1 @@
-Tehtävät 2.12 - 2.14
+Tehtävät 2.18 - 2.20 (muuttunut numerointi)
