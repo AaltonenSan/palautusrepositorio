@@ -126,7 +126,7 @@ const App = () => {
           }, 5000)
           setPersons(persons.filter(person => person.name !== newPerson.name))
         })
-      setNewPerson({name: '', number: ''})
+      setNewPerson({ name: '', number: '' })
     }
   }
 
@@ -146,9 +146,13 @@ const App = () => {
         }, 5000)
       })
       .catch(error => {
-        console.log(error)
+        setErrorMessage(error.response.data.error)
+        setTimeout(() => {
+          setErrorMessage(null)
+        }, 5000)
+        console.log(error.response.data)
       })
-    setNewPerson({name: '', number: ''})
+    setNewPerson({ name: '', number: '' })
   };
 
   return (
