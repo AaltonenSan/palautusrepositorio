@@ -1,3 +1,4 @@
+const mongoose = require('mongoose')
 const logger = require('./logger')
 
 const requestLogger = (request, response, next) => {
@@ -13,6 +14,10 @@ const unknownEndpoint = (request, response) => {
 }
 
 const errorHandler = (error, request, response, next) => {
+  if (error instanceof mongoose.Error.ValidationError) {
+    logger.error(error.message)
+    response.status(400).send(error.message)
+  }
   logger.error(error.message)
   next(error)
 }
