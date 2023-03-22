@@ -43,6 +43,14 @@ const initialBlogs = [
     author: "Robert C. Martin",
     url: "http://blog.cleancoder.com/uncle-bob/2016/05/01/TypeWars.html",
     likes: 2,
+  },
+  {
+    _id: "5a422ba71b54a676234d17ff",
+    title: "To be removed",
+    author: "Root user",
+    url: "https://myblog.io/removeme",
+    likes: 0,
+    user: "641abb4c2f4db430f2cc7ffa"
   }
 ]
 

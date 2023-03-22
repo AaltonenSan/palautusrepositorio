@@ -4,9 +4,19 @@ const helper = require('./test_helper')
 const app = require('../app')
 const api = supertest(app)
 const Blog = require('../models/blog')
-
+// using agent to store authorization in header
+const agent = supertest.agent(app)
 
 describe('when there is initially some blogs saved', () => {
+  beforeAll(async () => {
+    const user = {
+      username: 'root',
+      password: 'sekret'
+    }
+    const response = await api.post('/api/login').send(user)
+    agent.auth(response.body.token, { type: 'bearer' })
+  })
+
   beforeEach(async () => {
     await Blog.deleteMany({})
     await Blog.insertMany(helper.initialBlogs)
@@ -32,18 +42,16 @@ describe('when there is initially some blogs saved', () => {
     blogs.forEach(blog => expect(blog.id).toBeDefined())
   })
 
-
   describe('additiong of a new blog', () => {
     test('succeeds with valid data', async () => {
       const newBlog = {
-        _id: "5a422bc61b54a676234d17fe",
         title: "Bloglist testing",
         author: "Full Stacker",
         url: "http://blog.fullstackopen.com/jesttest",
         likes: 1,
       }
 
-      await api
+      await agent
         .post('/api/blogs')
         .send(newBlog)
         .expect(201)
@@ -60,13 +68,12 @@ describe('when there is initially some blogs saved', () => {
 
     test('succeeds when the blog has no likes field', async () => {
       const newBlog = {
-        _id: "5a422bc61b54a676234d17ff",
         title: "No one likes me",
         author: "Full Stacker",
         url: "http://blog.fullstackopen.com/jesttest",
       }
 
-      await api
+      const response = await agent
         .post('/api/blogs')
         .send(newBlog)
         .expect(201)
@@ -75,18 +82,18 @@ describe('when there is initially some blogs saved', () => {
       const blogsAtEnd = await helper.blogsInDb()
       expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length + 1)
 
-      const addedBlog = blogsAtEnd.find(b => b.id === newBlog._id)
+      const addedBlog = blogsAtEnd.find(b => b.id === response.body.id)
       expect(addedBlog.likes).toBe(0)
+      expect(addedBlog.title).toContain('No one likes me')
     })
 
     test("fails with status code 400 if title is missing", async () => {
       const newBlog = {
-        _id: "5a422bc61b54a676234d17ff",
         author: "Full Stacker",
         url: "http://blog.whatismytitle.com/jesttest",
       }
 
-      await api
+      await agent
         .post('/api/blogs')
         .send(newBlog)
         .expect(400)
@@ -97,15 +104,31 @@ describe('when there is initially some blogs saved', () => {
 
     test("fails with status code 400 if url is missing", async () => {
       const newBlog = {
-        _id: "5a422bc61b54a676234d17ff",
         title: "I have no url",
         author: "Full Stacker",
+      }
+
+      await agent
+        .post('/api/blogs')
+        .send(newBlog)
+        .expect(400)
+
+      const blogsAtEnd = await helper.blogsInDb()
+      expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length)
+    })
+
+    test('fails with status code 401 if jwt invalid or not provided', async () => {
+      const newBlog = {
+        title: "Bloglist testing",
+        author: "Full Stacker",
+        url: "http://blog.fullstackopen.com/jesttest",
       }
 
       await api
         .post('/api/blogs')
         .send(newBlog)
-        .expect(400)
+        .expect(401)
+        .expect('Content-Type', /application\/json/)
 
       const blogsAtEnd = await helper.blogsInDb()
       expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length)
@@ -115,9 +138,9 @@ describe('when there is initially some blogs saved', () => {
   describe('deletion of a blog', () => {
     test('succeeds with status code 204 if id is valid', async () => {
       const blogsAtStart = await helper.blogsInDb()
-      const blogToDelete = blogsAtStart[0]
+      const blogToDelete = blogsAtStart.find(b => b.title === 'To be removed')
 
-      await api
+      await agent
         .delete(`/api/blogs/${blogToDelete.id}`)
         .expect(204)
 
@@ -129,9 +152,21 @@ describe('when there is initially some blogs saved', () => {
     })
 
     test('fails with status code 404 if id is invalid', async () => {
-      await api
+      await agent
         .delete('/api/blogs/invalidId')
-        .expect(404)
+        .expect(400)
+    })
+
+    test('fails with status code 401 if jwt invalid or not provided', async () => {
+      const blogsAtStart = await helper.blogsInDb()
+      const blogToDelete = blogsAtStart[0]
+
+      await api
+        .delete(`/api/blogs/${blogToDelete.id}`)
+        .expect(401)
+
+      const blogsAtEnd = await helper.blogsInDb()
+      expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length)
     })
   })
 
