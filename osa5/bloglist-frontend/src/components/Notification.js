@@ -1,3 +1,5 @@
+import PropTypes from 'prop-types'
+
 const Notification = ({ message, error }) => {
   const notificationStyle = {
     color: message ? 'green' : 'red',
@@ -17,6 +19,11 @@ const Notification = ({ message, error }) => {
       {message || error}
     </div>
   )
+}
+
+Notification.propTypes = {
+  message: PropTypes.string,
+  error: PropTypes.string
 }
 
 export default Notification

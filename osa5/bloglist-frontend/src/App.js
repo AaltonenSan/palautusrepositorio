@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import jwt_decode from 'jwt-decode'
 import Blog from './components/Blog'
 import BlogForm from './components/BlogForm'
 import LoginForm from './components/LoginForm'
@@ -33,27 +34,65 @@ const App = () => {
     const loggedUserJSON = window.localStorage.getItem('loggedUser')
     if (loggedUserJSON) {
       const user = JSON.parse(loggedUserJSON)
-      setUser(user)
-      blogService.setToken(user.token)
+      const decodedToken = jwt_decode(user.token)
+
+      if (decodedToken.exp * 1000 < Date.now()) {
+        window.localStorage.removeItem('loggedUser')
+      } else {
+        setUser(user)
+        blogService.setToken(user.token)
+      }
     }
   }, [])
 
   const createBlog = async (newBlog) => {
     try {
       blogFormRef.current.toggleVisibility()
-      const addedBlog = await blogService.create(newBlog)
+
+      // Temporarily set user from localStorage to blog to display it after submit
+      let addedBlog = await blogService.create(newBlog)
+      const loggedUserJSON = window.localStorage.getItem('loggedUser')
+      const user = JSON.parse(loggedUserJSON)
+      addedBlog.user = user
       setBlogs(blogs.concat(addedBlog))
+
       setMessage(`A new blog ${newBlog.title} by ${newBlog.author} added`)
       setTimeout(() => {
         setMessage(null)
       }, 5000)
     } catch (exception) {
-      console.log(exception)
       setErrorMessage(exception.response.data.error)
       setTimeout(() => {
         setErrorMessage(null)
       }, 5000)
     }
+  }
+
+  const updateBlog = async (id, blog) => {
+    try {
+      let updatedBlog = await blogService.update(id, blog)
+      updatedBlog.user = blog.user
+      setBlogs(blogs.map(b => b.id === updatedBlog.id ? updatedBlog : b))
+    } catch (exception) {
+      setErrorMessage(exception.response.data.error)
+      setTimeout(() => {
+        setErrorMessage(null)
+      }, 5000)
+    }
+  }
+
+  const removeBlog = async (blog) => {
+    if (window.confirm(`Remove blog ${blog.title} by ${blog.author}`))
+      try {
+        console.log('deleting', blog.id)
+        await blogService.remove(blog.id)
+        setBlogs(blogs.filter(b => b.id !== blog.id))
+      } catch (exception) {
+        setErrorMessage(exception.response.data.error)
+        setTimeout(() => {
+          setErrorMessage(null)
+        }, 5000)
+      }
   }
 
   const handleLogout = () => {
@@ -88,8 +127,13 @@ const App = () => {
           </Togglable>
         </div>
       )}
-      {blogs.map(blog => (
-        <Blog key={blog.id} blog={blog} />
+      {blogs.sort((a, b) => b.likes - a.likes).map(blog => (
+        <Blog
+          key={blog.id}
+          blog={blog}
+          updateBlog={updateBlog}
+          removeBlog={removeBlog}
+        />
       ))}
     </div>
   )
